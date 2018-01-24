@@ -1,0 +1,78 @@
+[Default]
+files = **.(py|md|rst|yml), tox.ini, .coafile
+ignore = (.tox|env|.env|venv)/**, docs/conf.py
+
+indent_size = 4
+use_spaces = True
+max_line_length = 120
+max_lines_per_file = 1000
+file_naming_convention = snake
+
+space_between_ending_comma_and_closing_bracket = yes
+dedent_closing_brackets = yes
+coalesce_brackets = yes
+blank_line_before_nested_class_or_def = yes
+
+[filenames]
+bears = FilenameBear
+
+[long-files]
+bears = LineCountBear
+
+[spacing]
+ignore = (.tox|env|.env|venv)/**, **.yml, tox.ini, .coafile
+bears = SpaceConsistencyBear
+
+[config-spacing]
+files = **.yml, tox.ini, .coafile
+bears = SpaceConsistencyBear
+indent_size = 2
+
+[python-spacing]  # Own section needed, otherwise conflicts occur
+files = **.py
+bears = YapfBear
+
+[python-docs]
+files = **.py
+bears = PyDocStyleBear
+pydocstyle_ignore =
+  D100, D101, D102, D103, D104, D105,  # Missing docstrings
+  D203,  # 1 blank line required before class docstring
+  D213,  # Multi-line docstring summary should start at the second line
+
+[python-semantic]
+files = **.py
+bears = RadonBear, PyUnusedCodeBear, CPDBear
+language = python
+
+[yaml]
+files = **.(yml|yaml)
+bears = YAMLLintBear
+yamllint_config = .yamllint
+
+[markdown]
+files = **.md
+bears = MarkdownBear
+
+[long-lines]  # After YapfBear as it might be able to autofix some of those occurrences
+bears = LineLengthBear
+
+[commit]
+bears = GitCommitBear
+shortlog_length = 72
+ignore_length_regex = https?://
+
+[keywords]
+files = **.py
+bears = KeywordBear
+language = python
+keywords = TODO, FIXME, pdb.set_trace()  # Ignore KeywordBear
+
+[links]
+bears = InvalidLinkBear
+# We ignore:
+# - example.com (coala default)
+# - {}-style formatting (coala default)
+# - %s-style formatting
+# - gitlab.skypicker.com since it requires auth
+link_ignore_regex = ([./]example.com|{|%(?:\(\w+?\))?s|gitlab\.skypicker\.com)
