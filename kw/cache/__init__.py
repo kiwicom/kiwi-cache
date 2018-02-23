@@ -15,14 +15,14 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
     refill_ttl = timedelta(seconds=5)
     resources_redis = None
 
-    def __init__(self, resources_redis=None):
+    def __init__(self, resources_redis=None):  # type: (redis.Connection) -> None
         self.instances.append(self)
 
         if resources_redis is not None:
             self.resources_redis = resources_redis
 
         if self.resources_redis is None:
-            raise RuntimeError('Redis connection is None')
+            raise RuntimeError('You must set a redis.Connection object')
 
         self.name = self.__class__.__name__
         self.expires_at = datetime.utcnow()
@@ -71,7 +71,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         if not self._data or self.expires_at < datetime.utcnow():
             try:
                 self.reload()
-            except:
+            except:  # FIXME
                 pass
 
     def get_refill_lock(self):  # type: () -> bool
