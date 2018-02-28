@@ -31,14 +31,14 @@ class AioKiwiCache:
     def redis_key(self):
         return 'resource:' + self.name
 
-    async def getitem(self, key):  # TODO name?
+    async def getitem(self, key):
         return (await self.get_data())[key]
 
     async def get(self, key, default=None):
         return (await self.get_data()).get(key, default)
 
     async def contains(self, key):
-        return key in (await self.get_data())
+        return key in await self.get_data()
 
     async def keys(self):
         return (await self.get_data()).keys()
@@ -64,11 +64,7 @@ class AioKiwiCache:
     async def save_to_cache(self, data):  # type: (dict) -> None
         """Save the provided full data bundle to cache."""
         try:
-            await self.resources_redis.set(
-                self.redis_key,
-                json.dumps(data),
-                expire=int(self.ttl.total_seconds() * 10)
-            )
+            await self.resources_redis.set(self.redis_key, json.dumps(data), expire=int(self.ttl.total_seconds() * 10))
         except aioredis.RedisError:
             pass
 
@@ -91,7 +87,7 @@ class AioKiwiCache:
         if not self._data or self.expires_at < datetime.utcnow():
             try:
                 await self.reload()
-            except:  # FIXME
+            except:
                 pass
 
     async def get_refill_lock(self):  # type: () -> bool
@@ -102,12 +98,14 @@ class AioKiwiCache:
         :return: Whether we got the lock or not
         """
         try:
-            return bool(await self.resources_redis.set(
-                self.redis_key + ':lock',
-                'locked',
-                expire=int(self.refill_ttl.total_seconds()),
-                exist=self.resources_redis.SET_IF_NOT_EXIST,
-            ))
+            return bool(
+                await self.resources_redis.set(
+                    self.redis_key + ':lock',
+                    'locked',
+                    expire=int(self.refill_ttl.total_seconds()),
+                    exist=self.resources_redis.SET_IF_NOT_EXIST,
+                )
+            )
         except aioredis.RedisError:
             pass
 
