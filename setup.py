@@ -15,6 +15,7 @@ setup(
     packages=find_packages(),
     install_requires=REQUIREMENTS,
     tests_require=TEST_REQUIREMENTS,
+    description="Cache for using Redis with diverse sources.",
     include_package_data=True,
     classifiers=[
         'Development Status :: 4 - Beta',
