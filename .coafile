@@ -42,7 +42,7 @@ pydocstyle_ignore =
 
 [python-semantic]
 files = **.py
-bears = RadonBear, PyUnusedCodeBear, CPDBear
+bears = RadonBear, PyUnusedCodeBear
 language = python
 
 [yaml]
