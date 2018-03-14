@@ -1,6 +1,7 @@
 import asyncio
 from datetime import timedelta, datetime
 
+import logging
 import aioredis
 
 from . import json
@@ -14,7 +15,7 @@ class AioKiwiCache:
     refill_ttl = timedelta(seconds=5)
     resources_redis = None
 
-    def __init__(self, resources_redis=None):  # type: (aioredis.Redis) -> None
+    def __init__(self, resources_redis=None, logger=None):  # type: (aioredis.Redis) -> None
         self.instances.append(self)
 
         if resources_redis is not None:
@@ -26,6 +27,7 @@ class AioKiwiCache:
         self.name = self.__class__.__name__
         self.expires_at = datetime.utcnow()
         self._data = {}  # type: dict
+        self.logger = logger if logger else logging.getLogger(__name__)
 
     @property
     def redis_key(self):
@@ -66,13 +68,14 @@ class AioKiwiCache:
         try:
             await self.resources_redis.set(self.redis_key, json.dumps(data), expire=int(self.ttl.total_seconds() * 10))
         except aioredis.RedisError:
-            pass
+            self.logger.exception("kiwicache.redis_exception")
 
     async def reload(self):
         """Load the full data bundle, from cache, or if unavailable, from source."""
         try:
             cache_data = await self.load_from_cache()
         except aioredis.RedisError:
+            self.logger.exception("kiwicache.redis_exception")
             return
 
         if cache_data:
@@ -88,7 +91,7 @@ class AioKiwiCache:
             try:
                 await self.reload()
             except:
-                pass
+                self.logger.exception("kiwicache.reload_exception")
 
     async def get_refill_lock(self):  # type: () -> bool
         """Lock loading from the expensive source.
@@ -118,6 +121,7 @@ class AioKiwiCache:
         try:
             source_data = await self.load_from_source()
         except Exception:
+            self.logger.exception("kiwicache.source_exception")
             await self.expire()
         else:
             if source_data:

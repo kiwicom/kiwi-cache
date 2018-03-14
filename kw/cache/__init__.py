@@ -2,12 +2,14 @@ import time
 from datetime import timedelta, datetime
 
 import sys
+import logging
 import redis
 if sys.version_info >= (3, 0):
     from collections import UserDict
 else:  # for Python 2
     from UserDict import IterableUserDict as UserDict  # pylint: disable=import-error
 from .helpers import ReadOnlyDictMixin
+
 from . import json
 
 
@@ -19,7 +21,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
     refill_ttl = timedelta(seconds=5)
     resources_redis = None
 
-    def __init__(self, resources_redis=None):  # type: (redis.Connection) -> None
+    def __init__(self, resources_redis=None, logger=None):  # type: (redis.Connection) -> None
         self.instances.append(self)
 
         if resources_redis is not None:
@@ -31,6 +33,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         self.name = self.__class__.__name__
         self.expires_at = datetime.utcnow()
         self._data = {}  # type: dict
+        self.logger = logger if logger else logging.getLogger(__name__)
 
     @property
     def redis_key(self):
@@ -61,6 +64,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         try:
             cache_data = self.load_from_cache()
         except redis.exceptions.ConnectionError:
+            self.logger.exception("kiwicache.redis_exception")
             return
 
         if cache_data:
@@ -76,7 +80,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
             try:
                 self.reload()
             except:
-                pass
+                self.logger.exception("kiwicache.reload_exception")
 
     def get_refill_lock(self):  # type: () -> bool
         """Lock loading from the expensive source.
@@ -88,7 +92,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         try:
             return bool(self.resources_redis.set(self.redis_key + ':lock', 'locked', ex=self.refill_ttl, nx=True))
         except redis.exceptions.ConnectionError:
-            pass
+            self.logger.exception("kiwicache.redis_exception")
 
     def refill_cache(self):
         """Cache the full data bundle in Redis."""
@@ -99,6 +103,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         try:
             source_data = self.load_from_source()
         except Exception:
+            self.logger.exception("kiwicache.source_exception")
             self.expire()
         else:
             if source_data:
