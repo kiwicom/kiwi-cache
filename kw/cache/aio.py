@@ -5,6 +5,7 @@ import logging
 import aioredis
 
 from . import json
+from .helpers import CallAttempt, CallAttemptException
 
 
 class AioKiwiCache:
@@ -32,6 +33,7 @@ class AioKiwiCache:
         self._data = {}  # type: dict
         self.logger = logger if logger else logging.getLogger(__name__)
         self.statsd = statsd
+        self.call_attempt = CallAttempt("{}.load_from_source".format(self.name.lower()))
 
     @property
     def redis_key(self):
@@ -99,6 +101,8 @@ class AioKiwiCache:
         if not self._data or self.expires_at < datetime.utcnow():
             try:
                 await self.reload()
+            except CallAttemptException:
+                raise
             except Exception:
                 self.logger.exception("kiwicache.reload_exception")
 
@@ -132,8 +136,10 @@ class AioKiwiCache:
             if not source_data:
                 raise RuntimeError('load_from_source returned empty response!')
 
+            self.call_attempt.reset()
             await self.save_to_cache(source_data)
             self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
         except Exception:
             self.logger.exception("kiwicache.source_exception")
+            self.call_attempt.countdown()
             self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:load_error'])
