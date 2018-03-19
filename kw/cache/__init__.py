@@ -1,8 +1,12 @@
 import time
 from datetime import timedelta, datetime
 
+import sys
 import redis
-from future.moves.collections import UserDict
+if sys.version_info >= (3, 0):
+    from collections import UserDict
+else:  # for Python 2
+    from UserDict import IterableUserDict as UserDict  # pylint: disable=import-error
 from .helpers import ReadOnlyDictMixin
 from . import json
 
