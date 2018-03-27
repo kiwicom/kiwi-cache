@@ -8,7 +8,7 @@ Make sure that your code is PEP8 compliant. Every new piece of code should be pr
 
 - If don't have write access, please fork the repo and make merge request with changes afterwards.
   [Detailed tutorial of forking workflow](https://docs.gitlab.com/ee/workflow/forking_workflow.html)
-- If you have at least developer access, create branch and merge request afterwards.
+- If you have write access, create a branch with a merge request afterwards.
   (prefix with `WIP:` when its not ready to merge)
 
 Once you have your merge request ready, ask a responsible person of repository for a code review.
