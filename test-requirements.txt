@@ -7,9 +7,12 @@
 astroid==1.4.9            # via pylint
 coverage==4.3.4
 freezegun==0.3.9
+future==0.16.0
 isort==4.2.5              # via pylint
 lazy-object-proxy==1.2.2  # via astroid
 mccabe==0.5.3             # via pylint
+mock==2.0.0 ; python_version < "3.0"
+pbr==4.0.2 ; python_version < "3.0"             # via mock
 py==1.4.32                # via pytest
 pylint==1.6.5
 pytest-asyncio==0.8.0 ; python_version > "3.3"
@@ -17,5 +20,8 @@ pytest-cov==2.4.0
 pytest-mock==1.5.0
 pytest==3.0.6
 python-dateutil==2.6.1    # via freezegun
-six==1.10.0               # via astroid, freezegun, pylint, python-dateutil
+redis==2.10.6             # via testing.redis
+six==1.10.0               # via astroid, freezegun, mock, pylint, python-dateutil
+testing.common.database==2.0.3  # via testing.redis
+testing.redis==1.1.1
 wrapt==1.10.8             # via astroid

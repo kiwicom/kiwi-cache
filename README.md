@@ -112,3 +112,5 @@ To run all tests:
 ```
 tox
 ```
+
+Make sure to install Redis if you want the integration tests to work.

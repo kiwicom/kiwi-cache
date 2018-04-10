@@ -1,7 +1,10 @@
 coverage
 freezegun
+future
 pylint
 pytest
 pytest-asyncio ; python_version > "3.3"
 pytest-cov
 pytest-mock
+mock ; python_version < "3.0"
+testing.redis
