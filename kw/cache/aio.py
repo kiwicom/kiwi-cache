@@ -90,7 +90,7 @@ class AioKiwiCache:
         if not self._data or self.expires_at < datetime.utcnow():
             try:
                 await self.reload()
-            except:
+            except Exception:
                 self.logger.exception("kiwicache.reload_exception")
 
     async def get_refill_lock(self):  # type: () -> bool

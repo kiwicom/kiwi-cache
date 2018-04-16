@@ -79,7 +79,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         if not self._data or self.expires_at < datetime.utcnow():
             try:
                 self.reload()
-            except:
+            except Exception:
                 self.logger.exception("kiwicache.reload_exception")
 
     def get_refill_lock(self):  # type: () -> bool
