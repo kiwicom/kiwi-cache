@@ -15,7 +15,7 @@ class AioKiwiCache:
     refill_ttl = timedelta(seconds=5)
     resources_redis = None
 
-    def __init__(self, resources_redis=None, logger=None):  # type: (aioredis.Redis) -> None
+    def __init__(self, resources_redis=None, logger=None):  # type: (redis.Connection, logging.Logger) -> None
         self.instances.append(self)
 
         if resources_redis is not None:
