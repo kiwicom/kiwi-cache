@@ -1,9 +1,11 @@
 # kiwi-cache
 
-Cache for using Redis with diverse sources. Python 2.7 to 3.6 are supported. It is possible to use KiwiCache
-for project with asyncio.
+Redis cache with pythonic dict-like interface just a method away!
 
-## Instalaltion
+You just need to implement `load_from_source` with desired resource and you are good to go! ✨
+Python 2.7 to 3.6 are supporte, also asyncio supported by AioKiwiCache.
+
+## Installation
 
 The simplest way to use kiwi-cache in your project is to install it with pip:
 
@@ -60,6 +62,20 @@ loop = asyncio.get_event_loop()
 loop.run_until_complete(main_async())
 loop.close()
 ```
+
+## Periodic cache refresh task
+
+In case you want to avoid the performance degradation of your API workers
+caused by the cache refill (especially in case of sync workers), run `refresh_task` in
+some periodic task (cronjob, celery tasks).
+
+## Data expiration
+
+You can specify expiration of data in redis by overwriting `cache_ttl`. By default it is `reload_ttl * 10`,
+which means that cached data in redis will be availible for some time even if `load_from_source` fails.
+
+In case you have less expiration-sensitive data, you can specify `cache_ttl=None` which will disable
+the expiration of cached data in redis. This can be very dangerous thing to do without proper alerting in place.
 
 ## Testing
 
