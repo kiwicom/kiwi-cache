@@ -63,11 +63,6 @@ loop.run_until_complete(main_async())
 loop.close()
 ```
 
-## Periodic cache refresh task
-
-In case you want to avoid the performance degradation of your API workers
-caused by the cache refill (especially in case of sync workers), run `refresh_task` in
-some periodic task (cronjob, celery tasks).
 
 ## Data expiration
 
@@ -76,6 +71,28 @@ which means that cached data in redis will be availible for some time even if `l
 
 In case you have less expiration-sensitive data, you can specify `cache_ttl=None` which will disable
 the expiration of cached data in redis. This can be very dangerous thing to do without proper alerting in place.
+
+## Periodic cache refresh task
+
+In case you want to avoid the performance degradation of your API workers caused
+by the cache refill (especially in case of sync workers), you can add this snippet to your app as periodic task:
+
+```python
+from kw.booking import caches
+
+def main():
+    """Refresh resources data in Redis caches from source.
+
+    Use this function in some periodic task in case you want to avoid performance
+    degradation on your API workers.
+    """
+    for resource in caches.KiwiCache.instances:
+        resource.refill_cache()
+
+
+if __name__ == '__main__':
+    main()
+```
 
 ## Testing
 
