@@ -17,8 +17,9 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
     """Caches data from expensive sources to Redis and to memory."""
 
     instances = []  # type: List[KiwiCache]
-    ttl = timedelta(minutes=1)
-    refill_ttl = timedelta(seconds=5)
+    reload_ttl = timedelta(minutes=1)
+    cache_ttl = reload_ttl * 10
+    refill_lock_ttl = timedelta(seconds=5)
     resources_redis = None
 
     def __init__(self, resources_redis=None, logger=None):  # type: (redis.Connection, logging.Logger) -> None
@@ -55,7 +56,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
     def save_to_cache(self, data):  # type: (dict) -> None
         """Save the provided full data bundle to cache."""
         try:
-            self.resources_redis.set(self.redis_key, json.dumps(data), ex=(self.ttl * 10))
+            self.resources_redis.set(self.redis_key, json.dumps(data), ex=self.cache_ttl)
         except redis.exceptions.ConnectionError:
             pass
 
@@ -69,7 +70,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
 
         if cache_data:
             self._data = json.loads(cache_data)
-            self.expires_at = datetime.utcnow() + self.ttl
+            self.expires_at = datetime.utcnow() + self.reload_ttl
         else:
             self.refill_cache()
             self.reload()
@@ -90,26 +91,19 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         :return: Whether we got the lock or not
         """
         try:
-            return bool(self.resources_redis.set(self.redis_key + ':lock', 'locked', ex=self.refill_ttl, nx=True))
+            return bool(self.resources_redis.set(self.redis_key + ':lock', 'locked', ex=self.refill_lock_ttl, nx=True))
         except redis.exceptions.ConnectionError:
             self.logger.exception("kiwicache.redis_exception")
 
     def refill_cache(self):
         """Cache the full data bundle in Redis."""
         if not self.get_refill_lock():
-            time.sleep(self.refill_ttl.total_seconds())  # let the lock owner finish
+            time.sleep(self.refill_lock_ttl.total_seconds())  # let the lock owner finish
             return
 
         try:
             source_data = self.load_from_source()
-        except Exception:
-            self.logger.exception("kiwicache.source_exception")
-            self.expire()
-        else:
             if source_data:
                 self.save_to_cache(source_data)
-            else:
-                self.expire()
-
-    def expire(self):
-        self.resources_redis.expire(self.redis_key, time=(self.ttl * 10))
+        except Exception:
+            self.logger.exception("kiwicache.source_exception")

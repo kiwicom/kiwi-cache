@@ -11,8 +11,9 @@ class AioKiwiCache:
     """Caches data from expensive sources to Redis and to memory."""
 
     instances = []  # type: List[AioKiwiCache]
-    ttl = timedelta(minutes=1)
-    refill_ttl = timedelta(seconds=5)
+    reload_ttl = timedelta(minutes=1)
+    cache_ttl = reload_ttl * 10
+    refill_lock_ttl = timedelta(seconds=5)
     resources_redis = None
 
     def __init__(self, resources_redis=None, logger=None):  # type: (redis.Connection, logging.Logger) -> None
@@ -66,7 +67,9 @@ class AioKiwiCache:
     async def save_to_cache(self, data):  # type: (dict) -> None
         """Save the provided full data bundle to cache."""
         try:
-            await self.resources_redis.set(self.redis_key, json.dumps(data), expire=int(self.ttl.total_seconds() * 10))
+            await self.resources_redis.set(
+                self.redis_key, json.dumps(data), expire=int(self.cache_ttl.total_seconds()) if self.cache_ttl else 0
+            )
         except aioredis.RedisError:
             self.logger.exception("kiwicache.redis_exception")
 
@@ -80,7 +83,7 @@ class AioKiwiCache:
 
         if cache_data:
             self._data = json.loads(cache_data)
-            self.expires_at = datetime.utcnow() + self.ttl
+            self.expires_at = datetime.utcnow() + self.reload_ttl
         else:
             await self.refill_cache()
             await self.reload()
@@ -105,7 +108,7 @@ class AioKiwiCache:
                 await self.resources_redis.set(
                     self.redis_key + ':lock',
                     'locked',
-                    expire=int(self.refill_ttl.total_seconds()),
+                    expire=int(self.refill_lock_ttl.total_seconds()),
                     exist=self.resources_redis.SET_IF_NOT_EXIST,
                 )
             )
@@ -115,19 +118,12 @@ class AioKiwiCache:
     async def refill_cache(self):
         """Cache the full data bundle in Redis."""
         if not await self.get_refill_lock():
-            await asyncio.sleep(self.refill_ttl.total_seconds())  # let the lock owner finish
+            await asyncio.sleep(self.refill_lock_ttl.total_seconds())  # let the lock owner finish
             return
 
         try:
             source_data = await self.load_from_source()
-        except Exception:
-            self.logger.exception("kiwicache.source_exception")
-            await self.expire()
-        else:
             if source_data:
                 await self.save_to_cache(source_data)
-            else:
-                await self.expire()
-
-    async def expire(self):
-        await self.resources_redis.expire(self.redis_key, timeout=int(self.ttl.total_seconds()) * 10)
+        except Exception:
+            self.logger.exception("kiwicache.source_exception")
