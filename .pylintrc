@@ -19,6 +19,7 @@ disable =
   abstract-method,
   no-self-use,
   fixme,
+  expression-not-assigned,
   too-few-public-methods,
   super-init-not-called,
   too-many-ancestors,

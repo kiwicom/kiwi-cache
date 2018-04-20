@@ -31,6 +31,7 @@ class AioKiwiCache:
         self.expires_at = datetime.utcnow()
         self._data = {}  # type: dict
         self.logger = logger if logger else logging.getLogger(__name__)
+        self.statsd = statsd
 
     @property
     def redis_key(self):
