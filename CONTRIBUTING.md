@@ -15,5 +15,5 @@ Once you have your merge request ready, ask a responsible person of repository f
 
 If you leave some of non-crucial discussions unresolved, create an issue for resolving them later.
 
-Write your changes to [changelog](CHANGELOG.md) which follows the [https://keepachangelog.com/en/1.0.0/](keepachangelog)
-guide.
+Write your changes to [changelog](CHANGELOG.md) which follows
+the [keep a changelog](https://keepachangelog.com/en/1.0.0/) guide.
