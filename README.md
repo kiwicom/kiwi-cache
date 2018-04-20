@@ -3,7 +3,7 @@
 Redis cache with pythonic dict-like interface just a method away!
 
 You just need to implement `load_from_source` with desired resource and you are good to go! ✨
-Python 2.7 to 3.6 are supporte, also asyncio supported by AioKiwiCache.
+Python 2.7 to 3.6 are supported, also asyncio supported by AioKiwiCache.
 
 ## Installation
 
@@ -63,6 +63,17 @@ loop.run_until_complete(main_async())
 loop.close()
 ```
 
+## Instrumentation
+
+You can pass `datadog.DogStatsd` instance into KiwiCache as `statsd` argument:
+Metric name is in format `kiwicache` with tags `name` and `status`:
+
+- `name` is the class name of the subclassed cache
+- `status` can be:
+  - `redis_error` - error occured during saving/getting data from redis
+  - `load_error` - `load_from_source` fails or doesn't return data
+  - `success` - data is successfully loaded from source or from redis
+- ideally pass `datadog.DogStatsd` with defined `namespace` to avoid collisions
 
 ## Data expiration
 

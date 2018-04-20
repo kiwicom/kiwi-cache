@@ -16,7 +16,9 @@ class AioKiwiCache:
     refill_lock_ttl = timedelta(seconds=5)
     resources_redis = None
 
-    def __init__(self, resources_redis=None, logger=None):  # type: (redis.Connection, logging.Logger) -> None
+    def __init__(self, resources_redis=None, logger=None, statsd=None):
+        # type: (redis.Connection, logging.Logger, datadog.DogStatsd) -> None
+
         self.instances.append(self)
 
         if resources_redis is not None:
@@ -71,6 +73,7 @@ class AioKiwiCache:
                 self.redis_key, json.dumps(data), expire=int(self.cache_ttl.total_seconds()) if self.cache_ttl else 0
             )
         except aioredis.RedisError:
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
             self.logger.exception("kiwicache.redis_exception")
 
     async def reload(self):
@@ -79,11 +82,13 @@ class AioKiwiCache:
             cache_data = await self.load_from_cache()
         except aioredis.RedisError:
             self.logger.exception("kiwicache.redis_exception")
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
             return
 
         if cache_data:
             self._data = json.loads(cache_data)
             self.expires_at = datetime.utcnow() + self.reload_ttl
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
         else:
             await self.refill_cache()
             await self.reload()
@@ -123,7 +128,11 @@ class AioKiwiCache:
 
         try:
             source_data = await self.load_from_source()
-            if source_data:
-                await self.save_to_cache(source_data)
+            if not source_data:
+                raise RuntimeError('load_from_source returned empty response!')
+
+            await self.save_to_cache(source_data)
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
         except Exception:
             self.logger.exception("kiwicache.source_exception")
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:load_error'])

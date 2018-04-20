@@ -22,7 +22,9 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
     refill_lock_ttl = timedelta(seconds=5)
     resources_redis = None
 
-    def __init__(self, resources_redis=None, logger=None):  # type: (redis.Connection, logging.Logger) -> None
+    def __init__(self, resources_redis=None, logger=None, statsd=None):
+        # type: (redis.Connection, logging.Logger, datadog.DogStatsd) -> None
+
         self.instances.append(self)
 
         if resources_redis is not None:
@@ -35,6 +37,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         self.expires_at = datetime.utcnow()
         self._data = {}  # type: dict
         self.logger = logger if logger else logging.getLogger(__name__)
+        self.statsd = statsd
 
     @property
     def redis_key(self):
@@ -58,19 +61,22 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         try:
             self.resources_redis.set(self.redis_key, json.dumps(data), ex=self.cache_ttl)
         except redis.exceptions.ConnectionError:
-            pass
+            self.logger.exception("kiwicache.save_failed")
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
 
     def reload(self):
         """Load the full data bundle, from cache, or if unavailable, from source."""
         try:
             cache_data = self.load_from_cache()
         except redis.exceptions.ConnectionError:
-            self.logger.exception("kiwicache.redis_exception")
+            self.logger.exception("kiwicache.load_failed")
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
             return
 
         if cache_data:
             self._data = json.loads(cache_data)
             self.expires_at = datetime.utcnow() + self.reload_ttl
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
         else:
             self.refill_cache()
             self.reload()
@@ -103,7 +109,11 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
 
         try:
             source_data = self.load_from_source()
-            if source_data:
-                self.save_to_cache(source_data)
+            if not source_data:
+                raise RuntimeError('load_from_source returned empty response!')
+
+            self.save_to_cache(source_data)
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
         except Exception:
             self.logger.exception("kiwicache.source_exception")
+            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:load_error'])
