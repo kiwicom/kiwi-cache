@@ -17,8 +17,9 @@ pip install kiwi-cache
 
 An application for caching data from filesystem.
 
-```
+```python
 import redis
+
 from kw.cache import KiwiCache
 ...
 
@@ -38,9 +39,10 @@ if __name__=="__main__":
 
 The KiwiCache supports asynchronous application with Redis. The similar issue looks following way:
 
-```
+```python
 import asyncio
 import aioredis
+
 from kw.cache.aio import AioKiwiCache as KiwiCache
 ...
 
@@ -61,6 +63,24 @@ async def main_async():
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main_async())
 loop.close()
+```
+
+If you want to cache data from DB table, you can use DBTableResource like this:
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+from kw.cache.dbcache import DBTableResource
+
+engine = create_engine(...)
+scoped_db_session = scoped_session(sessionmaker(bind=engine))
+
+currency_rates = DBTableResource(scoped_db_session, 'currency_rates', key='currency', columns=['currency', 'course'])
+kiwi_airlines = DBTableResource(scoped_db_session, 'kiwi_airlines', key='iatacode', columns=['*'])
+
+# >>> print(kiwi_airlines['FR']['name'])
+# 'Ryanair'
 ```
 
 ## Instrumentation

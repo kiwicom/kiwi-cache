@@ -12,3 +12,4 @@ hiredis==0.2.0            # via aioredis
 redis==2.10.6
 simplejson==3.13.2
 typing==3.6.4 ; python_version < "3"
+sqlalchemy==1.2.7

@@ -3,5 +3,6 @@ async-timeout ; python_version > '3.3'
 attrs
 redis
 simplejson
+sqlalchemy
 enum34 ; python_version < '3.4'
 typing ; python_version < '3'

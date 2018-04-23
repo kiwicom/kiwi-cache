@@ -21,7 +21,8 @@ pytest-mock==1.5.0
 pytest==3.0.6
 python-dateutil==2.6.1    # via freezegun
 redis==2.10.6             # via testing.redis
-six==1.10.0               # via astroid, freezegun, mock, pylint, python-dateutil
+six==1.10.0               # via astroid, freezegun, pylint, python-dateutil
+sqlalchemy==1.2.7
 testing.common.database==2.0.3  # via testing.redis
 testing.redis==1.1.1
 wrapt==1.10.8             # via astroid
