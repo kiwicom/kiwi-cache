@@ -5,16 +5,6 @@ import pytest
 from kw.cache import KiwiCache as uuid
 
 
-@pytest.fixture
-def redis(mocker):
-    return mocker.stub(name='mock_redis')
-
-
-@pytest.fixture
-def test_data():
-    return {"a": 1, "b": 2, "c": "hello"}
-
-
 def test_dict(redis, test_data):
     instance_one = uuid(resources_redis=redis)
     instance_one._data = test_data

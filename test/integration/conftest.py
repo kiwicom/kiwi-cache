@@ -11,12 +11,12 @@ def redis_url():
     try:
         yield os.environ['TEST_REDIS_URL']
     except KeyError:
-        with testing.redis.RedisServer() as redis:
-            yield 'redis://{host}:{port}/{db}'.format(**redis.dsn())
+        with testing.redis.RedisServer() as test_redis:
+            yield 'redis://{host}:{port}/{db}'.format(**test_redis.dsn())
 
 
 @pytest.fixture
-def redis(redis_url):
+def redis(redis_url):  # pylint: disable=redefined-outer-name
     client = redislib.StrictRedis.from_url(redis_url)
     yield client
     client.flushall()
