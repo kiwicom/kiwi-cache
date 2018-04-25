@@ -16,9 +16,6 @@ tests:
   script:
    - export TEST_REDIS_URL=redis://$REDIS_PORT_6379_TCP_ADDR
    - tox
-  cache:
-    paths:
-     - .tox/
 
 release:
   stage: release
