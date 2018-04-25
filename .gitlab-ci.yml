@@ -17,26 +17,6 @@ tests:
    - export TEST_REDIS_URL=redis://$REDIS_PORT_6379_TCP_ADDR
    - tox
 
-release:
-  stage: release
-  image: python:3.5-alpine
-  variables:
-    PYPI_CONFIG: |
-      [distutils]
-      index-servers = kiwi
-
-      [kiwi]
-      repository: https://pypi.skypicker.com/pypi/
-      username: $PYPI_USERNAME
-      password: $PYPI_PASSWORD
-  script:
-   - echo "$PYPI_CONFIG" > ~/.pypirc
-   - pip install wheel
-   - python setup.py bdist_wheel --universal upload -r kiwi
-  only:
-   - master
-  allow_failure: yes  # always runs but fails if there's already a release for the version
-
 pages:
   stage: release
   image: python:3.5-alpine
