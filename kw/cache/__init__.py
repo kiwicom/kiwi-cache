@@ -30,15 +30,14 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         if resources_redis is not None:
             self.resources_redis = resources_redis
 
-        if self.resources_redis is None:
-            raise RuntimeError('You must set a redis.Connection object')
-
         self.name = self.__class__.__name__
         self.expires_at = datetime.utcnow()
         self._data = {}  # type: dict
         self.logger = logger if logger else logging.getLogger(__name__)
         self.statsd = statsd
         self.call_attempt = CallAttempt("{}.load_from_source".format(self.name.lower()))
+
+        self.check_initialization()
 
     @property
     def redis_key(self):
@@ -48,6 +47,16 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
     def data(self):
         self.maybe_reload()
         return self._data
+
+    def check_initialization(self):
+        if self.resources_redis is None:
+            raise RuntimeError('You must set a redis.Connection object')
+
+        if self.cache_ttl < self.reload_ttl:
+            raise RuntimeError('The parameter cache_ttl has to be greater then reload_ttl.')
+
+        if self.resources_redis.ttl(self.redis_key) > int(self.reload_ttl.total_seconds()):
+            self.resources_redis.expire(self.redis_key, int(self.reload_ttl.total_seconds()))
 
     def load_from_source(self):  # type: () -> dict
         """Get the full data bundle from our expensive source."""

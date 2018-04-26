@@ -8,7 +8,7 @@ from . import json
 from .helpers import CallAttempt, CallAttemptException
 
 
-class AioKiwiCache:
+class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
     """Caches data from expensive sources to Redis and to memory."""
 
     instances = []  # type: List[AioKiwiCache]
@@ -25,8 +25,7 @@ class AioKiwiCache:
         if resources_redis is not None:
             self.resources_redis = resources_redis
 
-        if self.resources_redis is None:
-            raise RuntimeError('You must set an aioredis.Redis object')
+        self.check_initialization()
 
         self.name = self.__class__.__name__
         self.expires_at = datetime.utcnow()
@@ -34,6 +33,18 @@ class AioKiwiCache:
         self.logger = logger if logger else logging.getLogger(__name__)
         self.statsd = statsd
         self.call_attempt = CallAttempt("{}.load_from_source".format(self.name.lower()))
+        self.initialized = False
+
+    async def check_initialization(self):
+        if self.resources_redis is None:
+            raise RuntimeError('You must set a redis.Connection object')
+
+        if self.cache_ttl < self.reload_ttl:
+            raise RuntimeError('The cache_ttl has to be greater then reload_ttl.')
+
+    async def acheck_initialization(self):
+        if await self.resources_redis.ttl(self.redis_key) > self.reload_ttl.seconds:
+            await self.resources_redis.expire(self.redis_key, int(self.reload_ttl.total_seconds()))
 
     @property
     def redis_key(self):
@@ -98,6 +109,10 @@ class AioKiwiCache:
 
     async def maybe_reload(self):  # type: () -> None
         """Load the full data bundle if it's too old."""
+        if not self.initialized:
+            await self.acheck_initialization()
+            self.initialized = True
+
         if not self._data or self.expires_at < datetime.utcnow():
             try:
                 await self.reload()
