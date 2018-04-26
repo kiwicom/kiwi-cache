@@ -6,7 +6,7 @@
 
 - Python 2.7 compatibility
 - README, Changelog, Contributing
-- DBTableResource
+- SQLAlchemyResource
 - Attempt limit of failed load_from_source calls
 - Integration tests
 - logging

@@ -5,8 +5,8 @@ from sqlalchemy.sql.elements import ColumnElement  # pylint: disable=unused-impo
 from . import KiwiCache
 
 
-class DBTableResource(KiwiCache):
-    """Caches an entire table."""
+class SQLAlchemyResource(KiwiCache):
+    """Caches selected columns or an entire table."""
 
     def __init__(self, session, table_name, key=None, columns=None, where=None):  # pylint: disable=too-many-arguments
         # type: (scoped_session, str, Optional[str], Optional[List[str]], Optional[ColumnElement]) -> None
@@ -18,7 +18,7 @@ class DBTableResource(KiwiCache):
         self.columns = columns
         self.key = key
         self.where = where
-        super(DBTableResource, self).__init__()
+        super(SQLAlchemyResource, self).__init__()
         self.name = 'table-' + self.table_name
 
     def _get_source_data(self):  # type: () -> list

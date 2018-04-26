@@ -65,19 +65,19 @@ loop.run_until_complete(main_async())
 loop.close()
 ```
 
-If you want to cache data from DB table, you can use DBTableResource like this:
+If you want to cache data from DB table, you can use SQLAlchemyResource like this:
 
 ```python
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from kw.cache.dbcache import DBTableResource
+from kw.cache.dbcache import SQLAlchemyResource
 
 engine = create_engine(...)
 scoped_db_session = scoped_session(sessionmaker(bind=engine))
 
-currency_rates = DBTableResource(scoped_db_session, 'currency_rates', key='currency', columns=['currency', 'course'])
-kiwi_airlines = DBTableResource(scoped_db_session, 'kiwi_airlines', key='iatacode', columns=['*'])
+currency_rates = SQLAlchemyResource(scoped_db_session, 'currency_rates', key='currency', columns=['currency', 'course'])
+kiwi_airlines = SQLAlchemyResource(scoped_db_session, 'kiwi_airlines', key='iatacode', columns=['*'])
 
 # >>> print(kiwi_airlines['FR']['name'])
 # 'Ryanair'
