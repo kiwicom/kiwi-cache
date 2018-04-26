@@ -1,6 +1,12 @@
 ## [Unreleased]
 
-## [0.3.0] – 2018-03-14
+## [0.4.0] – 2018-04-26
+
+### Changed
+
+- Rename DBTableResource to SQLAlchemyResource
+
+## [0.3.0] – 2018-04-25
 
 ### Added
 
