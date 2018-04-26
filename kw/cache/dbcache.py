@@ -8,17 +8,22 @@ from . import KiwiCache
 class SQLAlchemyResource(KiwiCache):
     """Caches selected columns or an entire table."""
 
-    def __init__(self, session, table_name, key=None, columns=None, where=None):  # pylint: disable=too-many-arguments
-        # type: (scoped_session, str, Optional[str], Optional[List[str]], Optional[ColumnElement]) -> None
-        if not columns and not key:
-            raise ValueError('One of parameters ("columns" or "key") must be set.')
-
+    def __init__(self, resources_redis, session, table_name, key=None, **params):
+        # type: (source_redid, scoped_session, str, Optional[str], Optional[List[str]], Optional[ColumnElement]) -> None
         self.session = session
         self.table_name = table_name
-        self.columns = columns
         self.key = key
-        self.where = where
-        super(SQLAlchemyResource, self).__init__()
+        self.columns = params.get("columns")
+        self.where = params.get("where")
+
+        if not self.columns and not self.key:
+            raise ValueError('One of parameters ("columns" or "key") must be set.')
+
+        super(SQLAlchemyResource, self).__init__(
+            resources_redis=resources_redis,
+            logger=params.get("logger"),
+            statsd=params.get("statsd"),
+        )
         self.name = 'table-' + self.table_name
 
     def _get_source_data(self):  # type: () -> list
