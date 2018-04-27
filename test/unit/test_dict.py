@@ -6,20 +6,20 @@ from kw.cache import KiwiCache as uuid
 
 
 def test_dict(redis, test_data, mocker):
-    instance_one = uuid(resources_redis=redis)
+    instance = uuid(resources_redis=redis)
     mocker.patch.object(redis, "get", return_value=json.dumps(test_data))
 
-    assert [it for it in instance_one] == [it for it in test_data]
-    assert instance_one.keys() == (test_data.keys())
-    assert list(instance_one.values()) == list(test_data.values())
-    assert instance_one.items() == test_data.items()
-    assert instance_one["a"] == test_data["a"]
+    assert [it for it in instance] == [it for it in test_data]
+    assert instance.keys() == test_data.keys()
+    assert list(instance.values()) == list(test_data.values())
+    assert instance.items() == test_data.items()
+    assert instance["a"] == test_data["a"]
 
-    generator = (x for x in instance_one)
+    generator = (x for x in instance)
     assert next(generator) == next(x for x in test_data)
 
     if pytest.__version__ < "3":
-        assert instance_one.iteritems() == test_data.iteritems()
+        assert instance.iteritems() == test_data.iteritems()
 
 
 def test_init(redis, test_data):

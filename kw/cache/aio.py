@@ -35,7 +35,7 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
         self.call_attempt = CallAttempt("{}.load_from_source".format(self.name.lower()))
         self.initialized = False
 
-    async def check_initialization(self):
+    def check_initialization(self):
         if self.resources_redis is None:
             raise RuntimeError('You must set a redis.Connection object')
 
@@ -43,7 +43,7 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
             raise RuntimeError('The cache_ttl has to be greater then reload_ttl.')
 
     async def acheck_initialization(self):
-        if await self.resources_redis.ttl(self.redis_key) > self.reload_ttl.seconds:
+        if await self.resources_redis.ttl(self.redis_key) > int(self.reload_ttl.total_seconds()):
             await self.resources_redis.expire(self.redis_key, int(self.reload_ttl.total_seconds()))
 
     @property
