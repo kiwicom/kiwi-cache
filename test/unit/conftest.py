@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture
 def redis(mocker):
-    return mocker.stub(name='mock_redis')
+    return mocker.Mock(name='mock_redis')
 
 
 @pytest.fixture

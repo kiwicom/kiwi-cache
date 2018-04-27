@@ -5,9 +5,9 @@ import pytest
 from kw.cache import KiwiCache as uuid
 
 
-def test_dict(redis, test_data):
+def test_dict(redis, test_data, mocker):
     instance_one = uuid(resources_redis=redis)
-    instance_one._data = test_data
+    mocker.patch.object(redis, "get", return_value=json.dumps(test_data))
 
     assert [it for it in instance_one] == [it for it in test_data]
     assert instance_one.keys() == (test_data.keys())
