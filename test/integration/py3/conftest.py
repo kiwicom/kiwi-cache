@@ -23,9 +23,6 @@ class ArrayCache(AioKiwiCache):
     async def get_refill_lock(self):
         return True
 
-    async def acheck_initialization(self):
-        pass
-
 
 @pytest.fixture
 def get_cache(get_aioredis, mocker):  # pylint: disable=redefined-outer-name

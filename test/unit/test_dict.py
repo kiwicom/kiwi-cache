@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 
 import pytest
 
@@ -33,5 +34,12 @@ def test_init(redis, test_data):
             return json.dumps(self.load_from_source())
 
     cache1 = Cache(resources_redis=redis)
-
     assert cache1["a"] == 1
+
+    # Check RuntimeError when initial values are wrong
+    # The reload_ttl has to be greater then cache_ttl
+    cache1.cache_ttl = timedelta(seconds=5)
+    cache1.reload_ttl = timedelta(seconds=10)
+
+    with pytest.raises(RuntimeError):
+        cache1.check_initialization()

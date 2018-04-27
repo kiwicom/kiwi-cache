@@ -40,6 +40,14 @@ async def test_init(get_cache, mocker):
         '2rd call: Cache is filled, so the call succeeds'
     )
 
+    # Check RuntimeError when initial values are wrong
+    # The reload_ttl has to be greater then cache_ttl
+    cache.cache_ttl = timedelta(seconds=5)
+    cache.reload_ttl = timedelta(seconds=10)
+
+    with pytest.raises(RuntimeError):
+        cache.check_initialization()
+
 
 @pytest.mark.asyncio
 async def test_error(get_cache, mocker):
@@ -62,6 +70,23 @@ async def test_error(get_cache, mocker):
         '2nd call: Cache is empty, so try loading from source, which succeeds and fills cache, '
         '3rd call: Cache is filled, so the call succeeds'
     )
+
+
+@pytest.mark.asyncio
+async def test_ttl(get_cache, mocker):
+    cache = await get_cache()
+    cache.load_from_source = mocker.Mock(side_effect=[cache.load_from_source(), ])
+
+    cache.cache_ttl = timedelta(hours=1)
+    await cache.reload()
+    ttl = await cache.resources_redis.ttl(cache.redis_key)
+    assert ttl == timedelta(hours=1).total_seconds()
+
+    cache.cache_ttl = timedelta(minutes=1)
+    await cache.reload()
+    await cache.acheck_initialization()
+    ttl = await cache.resources_redis.ttl(cache.redis_key)
+    assert ttl == timedelta(minutes=1).total_seconds()
 
 
 @pytest.mark.asyncio
