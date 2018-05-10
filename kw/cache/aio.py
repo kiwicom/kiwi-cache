@@ -51,7 +51,13 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
         return 'resource:' + self.name
 
     async def getitem(self, key):
-        return (await self.get_data())[key]
+        data = await self.get_data()
+        if key not in data:
+            return self.__missing__(key)
+        return data[key]
+
+    def __missing__(self, key):
+        raise KeyError
 
     async def get(self, key, default=None):
         return (await self.get_data()).get(key, default)

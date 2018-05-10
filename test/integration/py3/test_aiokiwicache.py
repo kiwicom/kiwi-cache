@@ -109,3 +109,15 @@ async def test_maybe_reload(get_cache, mocker, frozen_time):
     await cache.maybe_reload()
     assert cache.load_from_source.call_count == 1, 'Since Redis key did not expire, no need to reload from source'
     assert cache.load_from_cache.call_count == 3
+
+
+@pytest.mark.asyncio
+async def test_missing(get_cache, mocker):
+    cache = await get_cache()
+    cache.load_from_source = mocker.Mock(side_effect=[cache.load_from_source(), ])
+    with pytest.raises(KeyError):
+        await cache.getitem('misisng-key')
+
+    missing = mocker.patch.object(cache, '__missing__')
+    await cache.getitem('misisng-key')
+    assert missing.call_count == 1
