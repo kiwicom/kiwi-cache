@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [0.4.1] – 2018-05-30
+
+### Changed
+
+- Add tests to check functionality of ttl
+- Validation for initial parameters
+- Fix missing connection to Redis in SQLAlchemyResource
+
 ## [0.4.0] – 2018-04-26
 
 ### Changed
