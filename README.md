@@ -102,7 +102,7 @@ Metric name is in format `kiwicache` with tags `name` and `status`:
 ## Data expiration
 
 You can specify expiration of data in redis by overwriting `cache_ttl`. By default it is `reload_ttl * 10`,
-which means that cached data in redis will be availible for some time even if `load_from_source` fails.
+which means that cached data in redis will be available for some time even if `load_from_source` fails.
 
 In case you have less expiration-sensitive data, you can specify `cache_ttl=None` which will disable
 the expiration of cached data in redis. This can be very dangerous thing to do without proper alerting in place.

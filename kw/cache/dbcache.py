@@ -1,28 +1,30 @@
-from sqlalchemy import column, table, select
-from sqlalchemy.orm.scoping import scoped_session  # pylint: disable=unused-import
-from sqlalchemy.sql.elements import ColumnElement  # pylint: disable=unused-import
+from typing import List  # pylint: disable=unused-import
+
+import attr
+from sqlalchemy import column, select, table
+from sqlalchemy.orm.scoping import scoped_session
+from sqlalchemy.sql.elements import ColumnElement
 
 from . import KiwiCache
 
 
+@attr.s
 class SQLAlchemyResource(KiwiCache):
     """Caches selected columns or an entire table."""
 
-    def __init__(self, resources_redis, session, table_name, key=None, **params):
-        # type: (source_redid, scoped_session, str, Optional[str], Optional[List[str]], Optional[ColumnElement]) -> None
-        self.session = session
-        self.table_name = table_name
-        self.key = key
-        self.columns = params.get("columns")
-        self.where = params.get("where")
+    session = attr.ib(None, type=scoped_session, validator=attr.validators.instance_of(scoped_session))
+    table_name = attr.ib(None, type=str, validator=attr.validators.instance_of(str))
+    key = attr.ib(None, type=str, validator=attr.validators.optional(attr.validators.instance_of(str)))
+    columns = attr.ib(None, type=List[str], validator=attr.validators.optional(attr.validators.instance_of(list)))
+    where = attr.ib(
+        None, type=ColumnElement, validator=attr.validators.optional(attr.validators.instance_of(ColumnElement))
+    )
 
-        if not self.columns and not self.key:
-            raise ValueError('One of parameters ("columns" or "key") must be set.')
-
-        super(SQLAlchemyResource, self).__init__(
-            resources_redis=resources_redis, logger=params.get("logger"), statsd=params.get("statsd")
-        )
-        self.name = "table-" + self.table_name
+    @key.validator
+    def mandatory_key_or_columns(self, attribute, value):
+        """Validator that key or columns is mandatory."""
+        if not value and not self.columns:
+            raise ValueError("One of parameters ('columns' or 'key') must be set.")
 
     def _get_source_data(self):  # type: () -> list
         """Get data from db based on ``self.columns`` and ``self.key`` values.
@@ -30,12 +32,12 @@ class SQLAlchemyResource(KiwiCache):
         :return: rows with data
         """
         if self.columns == ["*"]:
-            columns = self.columns
+            columns = ["*"]
         elif self.columns and self.key:
             columns = [column(name) for name in set(self.columns + [self.key])]
         elif self.columns:
-            columns = [column(name) for name in self.columns]
-        elif self.key:
+            columns = [column(name) for name in self.columns]  # pylint: disable=not-an-iterable
+        else:
             columns = [column(self.key)]
         query = select(columns)
 
@@ -44,7 +46,8 @@ class SQLAlchemyResource(KiwiCache):
         fetchall = self.session.execute(query.select_from(table(self.table_name))).fetchall()
         return [dict(key) for key in fetchall]
 
-    def load_from_source(self):  # type: () -> dict
+    def load_from_source(self):
+        # type: () -> dict
         """Load data from database tables.
 
         ``self.key`` is required parameter.

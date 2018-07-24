@@ -54,7 +54,7 @@ def masked_dict(data=None):
     whitelist = {"booking_token", "public_key", "idempotency_key"}
 
     return {
-        key: (  # Ignore YapfBear
+        key: (
             "-- MASKED --" if key.lower() not in whitelist and any(word in key.lower() for word in blacklist) else value
         )
         for key, value in data

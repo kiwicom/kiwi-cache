@@ -1,17 +1,17 @@
-from datetime import timedelta
-
+import attr
 import pytest
 
 from kw.cache import KiwiCache
 
 
+@attr.s
 class ArrayCache(KiwiCache):
-    refill_ttl = timedelta(seconds=1)
+    max_attempts = attr.ib(3, type=int, validator=attr.validators.instance_of(int))
 
     def load_from_source(self):
         return {"a": 101, "b": 102, "c": 103}
 
-    def get_refill_lock(self):
+    def _get_refill_lock(self):
         return True
 
 
