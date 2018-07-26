@@ -4,6 +4,7 @@ from datetime import timedelta, datetime
 import sys
 import logging
 import redis
+
 if sys.version_info >= (3, 0):
     from collections import UserDict
 else:  # for Python 2
@@ -41,7 +42,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
 
     @property
     def redis_key(self):
-        return 'resource:' + self.name
+        return "resource:" + self.name
 
     @property
     def data(self):
@@ -50,10 +51,10 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
 
     def check_initialization(self):
         if self.resources_redis is None:
-            raise RuntimeError('You must set a redis.Connection object')
+            raise RuntimeError("You must set a redis.Connection object")
 
         if self.cache_ttl < self.reload_ttl:
-            raise RuntimeError('The parameter cache_ttl has to be greater then reload_ttl.')
+            raise RuntimeError("The parameter cache_ttl has to be greater then reload_ttl.")
 
         if self.resources_redis.ttl(self.redis_key) > int(self.reload_ttl.total_seconds()):
             self.resources_redis.expire(self.redis_key, int(self.reload_ttl.total_seconds()))
@@ -72,7 +73,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
             self.resources_redis.set(self.redis_key, json.dumps(data), ex=self.cache_ttl)
         except redis.exceptions.ConnectionError:
             self.logger.exception("kiwicache.save_failed")
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:redis_error"])
 
     def reload(self):
         """Load the full data bundle, from cache, or if unavailable, from source."""
@@ -80,13 +81,13 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
             cache_data = self.load_from_cache()
         except redis.exceptions.ConnectionError:
             self.logger.exception("kiwicache.load_failed")
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:redis_error"])
             return
 
         if cache_data:
             self._data = json.loads(cache_data)
             self.expires_at = datetime.utcnow() + self.reload_ttl
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:success"])
         else:
             self.refill_cache()
             self.reload()
@@ -109,7 +110,7 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         :return: Whether we got the lock or not
         """
         try:
-            return bool(self.resources_redis.set(self.redis_key + ':lock', 'locked', ex=self.refill_lock_ttl, nx=True))
+            return bool(self.resources_redis.set(self.redis_key + ":lock", "locked", ex=self.refill_lock_ttl, nx=True))
         except redis.exceptions.ConnectionError:
             self.logger.exception("kiwicache.redis_exception")
 
@@ -122,12 +123,12 @@ class KiwiCache(UserDict, ReadOnlyDictMixin):
         try:
             source_data = self.load_from_source()
             if not source_data:
-                raise RuntimeError('load_from_source returned empty response!')
+                raise RuntimeError("load_from_source returned empty response!")
 
             self.call_attempt.reset()
             self.save_to_cache(source_data)
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:success"])
         except Exception:
             self.logger.exception("kiwicache.source_exception")
             self.call_attempt.countdown()
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:load_error'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:load_error"])

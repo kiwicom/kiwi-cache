@@ -20,18 +20,16 @@ class SQLAlchemyResource(KiwiCache):
             raise ValueError('One of parameters ("columns" or "key") must be set.')
 
         super(SQLAlchemyResource, self).__init__(
-            resources_redis=resources_redis,
-            logger=params.get("logger"),
-            statsd=params.get("statsd"),
+            resources_redis=resources_redis, logger=params.get("logger"), statsd=params.get("statsd")
         )
-        self.name = 'table-' + self.table_name
+        self.name = "table-" + self.table_name
 
     def _get_source_data(self):  # type: () -> list
         """Get data from db based on ``self.columns`` and ``self.key`` values.
 
         :return: rows with data
         """
-        if self.columns == ['*']:
+        if self.columns == ["*"]:
             columns = self.columns
         elif self.columns and self.key:
             columns = [column(name) for name in set(self.columns + [self.key])]

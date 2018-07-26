@@ -2,19 +2,17 @@ class ReadOnlyDictMixin(object):
     """Add to a ``collections.UserDict`` to make it read-only."""
 
     def raise_readonly_error(self, *_, **__):
-        raise RuntimeError('This dictionary is read-only')
+        raise RuntimeError("This dictionary is read-only")
 
     __setitem__ = __delitem__ = pop = popitem = clear = update = setdefault = raise_readonly_error
 
 
 class CallAttemptException(Exception):
-
     def __init__(self, name):
         super(CallAttemptException, self).__init__("Max attempt of call {}".format(name))
 
 
-class CallAttempt():
-
+class CallAttempt:
     def __init__(self, name, max_call=3):
         self.counter = None
         self.name = name

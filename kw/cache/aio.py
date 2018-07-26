@@ -37,10 +37,10 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
 
     def check_initialization(self):
         if self.resources_redis is None:
-            raise RuntimeError('You must set a redis.Connection object')
+            raise RuntimeError("You must set a redis.Connection object")
 
         if self.cache_ttl < self.reload_ttl:
-            raise RuntimeError('The cache_ttl has to be greater then reload_ttl.')
+            raise RuntimeError("The cache_ttl has to be greater then reload_ttl.")
 
     async def acheck_initialization(self):
         if await self.resources_redis.ttl(self.redis_key) > int(self.reload_ttl.total_seconds()):
@@ -48,7 +48,7 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
 
     @property
     def redis_key(self):
-        return 'resource:' + self.name
+        return "resource:" + self.name
 
     async def getitem(self, key):
         data = await self.get_data()
@@ -93,7 +93,7 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
                 self.redis_key, json.dumps(data), expire=int(self.cache_ttl.total_seconds()) if self.cache_ttl else 0
             )
         except aioredis.RedisError:
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:redis_error"])
             self.logger.exception("kiwicache.redis_exception")
 
     async def reload(self):
@@ -102,13 +102,13 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
             cache_data = await self.load_from_cache()
         except aioredis.RedisError:
             self.logger.exception("kiwicache.redis_exception")
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:redis_error'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:redis_error"])
             return
 
         if cache_data:
             self._data = json.loads(cache_data)
             self.expires_at = datetime.utcnow() + self.reload_ttl
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:success"])
         else:
             await self.refill_cache()
             await self.reload()
@@ -137,8 +137,8 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
         try:
             return bool(
                 await self.resources_redis.set(
-                    self.redis_key + ':lock',
-                    'locked',
+                    self.redis_key + ":lock",
+                    "locked",
                     expire=int(self.refill_lock_ttl.total_seconds()),
                     exist=self.resources_redis.SET_IF_NOT_EXIST,
                 )
@@ -155,12 +155,12 @@ class AioKiwiCache:  # pylint: disable=too-many-instance-attributes
         try:
             source_data = await self.load_from_source()
             if not source_data:
-                raise RuntimeError('load_from_source returned empty response!')
+                raise RuntimeError("load_from_source returned empty response!")
 
             self.call_attempt.reset()
             await self.save_to_cache(source_data)
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:success'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:success"])
         except Exception:
             self.logger.exception("kiwicache.source_exception")
             self.call_attempt.countdown()
-            self.statsd and self.statsd.increment('kiwicache', tags=['name:' + self.name, 'status:load_error'])
+            self.statsd and self.statsd.increment("kiwicache", tags=["name:" + self.name, "status:load_error"])

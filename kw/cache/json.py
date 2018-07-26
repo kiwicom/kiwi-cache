@@ -17,7 +17,7 @@ def default_encoder(obj):  # pylint: disable=method-hidden
     if isinstance(obj, Decimal):
         return str(float(obj))
 
-    if hasattr(obj, 'isoformat'):  # handles both date and datetime objects
+    if hasattr(obj, "isoformat"):  # handles both date and datetime objects
         return str(obj)
 
     if isinstance(obj, set):
@@ -50,12 +50,13 @@ def masked_dict(data=None):
     if isinstance(data, dict):
         data = data.items()
 
-    blacklist = {'secret', 'token', 'password', 'key'}
-    whitelist = {'booking_token', 'public_key', 'idempotency_key'}
+    blacklist = {"secret", "token", "password", "key"}
+    whitelist = {"booking_token", "public_key", "idempotency_key"}
 
     return {
-        key:
-        ('-- MASKED --' if key.lower() not in whitelist and any(word in key.lower() for word in blacklist) else value)
+        key: (  # Ignore YapfBear
+            "-- MASKED --" if key.lower() not in whitelist and any(word in key.lower() for word in blacklist) else value
+        )
         for key, value in data
     }
 
