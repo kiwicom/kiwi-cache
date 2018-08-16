@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+### Changed
+
+## [0.4.2] – 2018-08-16
+
+- Generalize KiwiCache and use attrs
+- Format of code by Black project
+
 ## [0.4.1] – 2018-05-30
 
 ### Changed
