@@ -38,10 +38,12 @@ class BaseKiwiCache(object):
         None, type=timedelta, validator=attr.validators.optional(attr.validators.instance_of(timedelta))
     )
     refill_ttl = attr.ib(timedelta(seconds=5), type=timedelta, validator=attr.validators.instance_of(timedelta))
-    logger = attr.ib(structlog.get_logger(), type=Any, validator=utils.mandatory_validator)
-    statsd = attr.ib(None, type=Any)
     metric = attr.ib("kiwicache", type=str, validator=attr.validators.instance_of(str))
-    json = attr.ib(json, type=Any, validator=utils.mandatory_validator)
+
+    # class attributes
+    logger = structlog.get_logger()
+    statsd = None
+    json = json
 
     def __attrs_post_init__(self):
         if self._cache_ttl is None:
@@ -240,12 +242,14 @@ class BaseKiwiCache(object):
 class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
     """Caches data from expensive sources to Redis and to memory."""
 
-    instances = []  # type: List[KiwiCache]
     reload_ttl = attr.ib(timedelta(minutes=1), type=timedelta, validator=attr.validators.instance_of(timedelta))
     expires_at = attr.ib(datetime.utcnow(), type=datetime, validator=attr.validators.instance_of(datetime))
     _data = attr.ib(attr.Factory(dict), type=dict, validator=attr.validators.instance_of(dict))
     max_attempts = attr.ib(-1, type=int, validator=attr.validators.instance_of(int))
     _call_attempt = attr.ib(init=False, type=CallAttempt)
+
+    # class attibutes
+    instances = []  # type: List[KiwiCache]
 
     def __attrs_post_init__(self):
         super(KiwiCache, self).__attrs_post_init__()

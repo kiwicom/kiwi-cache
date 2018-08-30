@@ -1,5 +1,4 @@
 aioredis ; python_version > '3.3'
-arrow
 async-timeout ; python_version > '3.3'
 attrs
 redis

@@ -1,12 +1,11 @@
 """Utility functions."""
-
-import arrow
+import time
 
 
 def get_current_timestamp():
-    # type: () -> int
-    """Get current timestamp int value."""
-    return arrow.utcnow().timestamp
+    # type: () -> float
+    """Get current timestamp float value."""
+    return time.time()
 
 
 def mandatory_validator(instance, attribute, value):

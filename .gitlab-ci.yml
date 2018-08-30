@@ -2,6 +2,13 @@ stages:
  - test
  - release
 
+black:
+  stage: test
+  image: kiwicom/black:18.6b4
+  script:
+    - black -l 120 --check --fast docs kw test setup.py
+    - black -l 120 --check --py36 kw/cache/aio.py
+
 static-analysis:
   stage: test
   image: coala/base:0.11

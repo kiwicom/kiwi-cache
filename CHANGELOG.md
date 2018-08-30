@@ -2,6 +2,18 @@
 
 ### Changed
 
+## [0.4.3] – 2018-09-03
+
+### Added
+
+- Black check for gitlab CI
+
+### Changed
+
+- Remove using arrow
+- Remove using attrs for class attributes
+- Format docs by Black project
+
 ## [0.4.2] – 2018-08-16
 
 - Generalize KiwiCache and use attrs
