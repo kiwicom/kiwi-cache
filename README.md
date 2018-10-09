@@ -121,7 +121,7 @@ def main():
     Use this function in some periodic task in case you want to avoid performance
     degradation on your API workers.
     """
-    for resource in caches.KiwiCache.instances:
+    for resource in caches.KiwiCache.instances.values():
         resource.refill_cache()
 
 

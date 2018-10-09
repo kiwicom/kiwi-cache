@@ -2,6 +2,18 @@
 
 ### Changed
 
+## [0.4.4] – 2018-10-09
+
+### Added
+
+- better docstring for `BaseKiwiCache` and `KiwiCache`
+
+### Changed
+
+- fix initial value of `expires_at` attribute of `KiwiCache`
+- fix `KiwiCache` data prolong if local `_data` is filled
+- change `instances` array to dict
+
 ## [0.4.3] – 2018-09-03
 
 ### Added

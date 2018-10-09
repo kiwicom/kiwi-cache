@@ -39,7 +39,7 @@ def test_refill_cache_source_with_error(mocker, cache, redis):
 
     cache.refill_cache()
     save_to_cache.assert_not_called()
-    reload_from_cache.assert_not_called()
+    assert reload_from_cache.call_count == 1
     redis.expire.assert_called_once_with(cache._cache_key, time=cache._cache_ttl)
     assert refill_fail.call_count == 1
 
@@ -51,7 +51,7 @@ def test_refill_cache_no_source(mocker, cache, redis):
 
     cache.refill_cache()
     save_to_cache.assert_not_called()
-    reload_from_cache.assert_not_called()
+    assert reload_from_cache.call_count == 1
     redis.expire.assert_called_once_with(cache._cache_key, time=cache._cache_ttl)
 
 
@@ -64,7 +64,7 @@ def test_refill_cache_no_source_with_wait(mocker, cache, redis):
 
     cache.refill_cache()
     save_to_cache.assert_not_called()
-    reload_from_cache.assert_not_called()
+    assert reload_from_cache.call_count == 1
     assert is_refilled.call_count == 2
     redis.expire.assert_called_once_with(cache._cache_key, time=cache._cache_ttl)
 

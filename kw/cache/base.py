@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import sys
 import time
-from typing import Any, List, Optional  # pylint: disable=unused-import
+from typing import Dict, Optional  # pylint: disable=unused-import
 
 import attr
 import redis
@@ -31,7 +31,22 @@ class CacheRecord(object):
 
 @attr.s
 class BaseKiwiCache(object):
-    """Helper class for load data from cache."""
+    """Helper class for load data from cache.
+
+    Base instance attributes:
+    - `resources_redis` - StrictRedis for communication with redis (cache) server
+    - `cache_ttl` - timedelta for redis (cache) key expiration time
+    - `refill_ttl` - timedelta for lock key expiration time
+    - `metric` - str value of datadog metric
+
+    Base class attributes:
+    - `logger` - logger instance
+    - `statsd` - datadog client instance
+    - `json` - module for json related processing
+
+    Method which can be typically overridden by subclasses:
+    - `_key_suffix`
+    """
 
     resources_redis = attr.ib(None, type=redis.StrictRedis, validator=attr.validators.instance_of(redis.StrictRedis))
     cache_ttl = attr.ib(
@@ -184,7 +199,7 @@ class BaseKiwiCache(object):
 
     def _prolong_cache_expiration(self):
         # type: () -> None
-        """Prolong cage expiration."""
+        """Prolong cache expiration."""
         try:
             self.resources_redis.expire(self._cache_key, time=self._cache_ttl)
         except redis.exceptions.ConnectionError:
@@ -207,7 +222,7 @@ class BaseKiwiCache(object):
         Inherited classes can override this method.
         :param msg: message
         """
-        self.logger.warning(msg, resource=self.name)
+        self.logger.warning(msg, resource=self.__key)
 
     def _log_exception(self, msg):
         # type: (str) -> None
@@ -216,7 +231,7 @@ class BaseKiwiCache(object):
         Inherited classes can override this method.
         :param msg: message
         """
-        self.logger.exception(msg, resource=self.name)
+        self.logger.exception(msg, resource=self.__key)
 
     def _log_error(self, msg):
         # type: (str) -> None
@@ -225,7 +240,7 @@ class BaseKiwiCache(object):
         Inherited classes can override this method.
         :param msg: message
         """
-        self.logger.error(msg, resource=self.name)
+        self.logger.error(msg, resource=self.__key)
 
     def _increment_metric(self, status):
         # type: (str) -> None
@@ -240,21 +255,53 @@ class BaseKiwiCache(object):
 
 @attr.s
 class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
-    """Caches data from expensive sources to Redis and to memory."""
+    """Caches data from expensive sources to Redis and to memory.
+
+    Workflow for get data (item) is:
+    1. If local `_data` is filled and not expired then return it
+    2. If data exists in redis then return it
+    3. Try refill redis data from source, in case of success return refilled data
+    4. Save local `_data` to redis (if filled) and return it
+    Also we can `refill` all data in redis using `instances` dict (current redis data are prolonged in case of failure).
+
+    Base instance attributes:
+    - `reload_ttl` - timedelta for local data expiration time
+    - `expires_at` - local data expiration time = current time + `reload_ttl` in the time of data reload
+    - `data` - local data dict
+    - `max_attempts` - maximum attempts for refill cache (if negative - one attempt is used and no Exception is raised)
+    - `_call_attempt` - local refill attempts countdown entity
+
+    Base class attributes:
+    - `instances` - dict of instances with one instance per each _cache_key
+
+    Each subclass must implement `load_from_source` method.
+    Method which can be typically overridden by subclasses:
+    - `_process_refill_error`
+
+    For another attributes and methods see parent classes docs.
+    """
 
     reload_ttl = attr.ib(timedelta(minutes=1), type=timedelta, validator=attr.validators.instance_of(timedelta))
-    expires_at = attr.ib(datetime.utcnow(), type=datetime, validator=attr.validators.instance_of(datetime))
+    expires_at = attr.ib(factory=datetime.utcnow, type=datetime, validator=attr.validators.instance_of(datetime))
     _data = attr.ib(attr.Factory(dict), type=dict, validator=attr.validators.instance_of(dict))
     max_attempts = attr.ib(-1, type=int, validator=attr.validators.instance_of(int))
     _call_attempt = attr.ib(init=False, type=CallAttempt)
 
-    # class attibutes
-    instances = []  # type: List[KiwiCache]
+    # class attributes
+    instances = {}  # type: Dict[str, KiwiCache]
 
     def __attrs_post_init__(self):
         super(KiwiCache, self).__attrs_post_init__()
-        self.instances.append(self)
+        self._add_instance()
         self._call_attempt = CallAttempt("{}.load_from_source".format(self.name.lower()), self.max_attempts)
+
+    def _add_instance(self):
+        """Add current instance to instances dict with _cache_key as dict key.
+
+        Typically instances are used for cache refill so one instance per each _cache_key is saved.
+        If you need all instances please override this method.
+        """
+        self.instances[self._cache_key] = self
 
     @reload_ttl.validator
     def reload_ttl_validator(self, attribute, value):
@@ -263,6 +310,7 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
 
     @property
     def _cache_ttl(self):
+        # type: () -> timedelta
         return self.cache_ttl if self.cache_ttl else self.reload_ttl * 10
 
     @property
@@ -306,6 +354,13 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
         """Load the full data bundle if it's too old."""
         if not self._data or self.expires_at < datetime.utcnow():
             self.reload()
+
+    def _prolong_cache_expiration(self):
+        """Prolong cache expiration or refill if it expires and we have data locally."""
+        super(KiwiCache, self)._prolong_cache_expiration()
+        successful_reload = self.reload_from_cache()
+        if not successful_reload and self._data:
+            self.save_to_cache(self._data)
 
     def _process_refill_error(self, msg, exception=None):
         """Process refill error.
