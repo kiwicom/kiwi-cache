@@ -8,7 +8,7 @@ with open("test-requirements.in") as f:
 
 setup(
     name="kiwi-cache",
-    version="0.4.3",
+    version="0.4.4",
     url="https://github.com/kiwicom/kiwi-cache",
     author="Stanislav Komanec",
     author_email="platform@kiwi.com",
@@ -16,6 +16,7 @@ setup(
     install_requires=REQUIREMENTS,
     tests_require=TEST_REQUIREMENTS,
     description="Cache for using Redis with diverse sources.",
+    long_description="Redis cache with pythonic dict-like interface just a method away!",
     include_package_data=True,
     classifiers=[
         "Development Status :: 4 - Beta",
