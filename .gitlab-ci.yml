@@ -1,23 +1,22 @@
 stages:
+ - build
  - test
  - release
 
+include:
+  - 'https://ci-files.skypicker.com/templates/build/coala.yml'
+  - 'https://ci-files.skypicker.com/templates/build/zoo.yml'
+
 black:
-  stage: test
+  stage: build
   image: kiwicom/black:18.6b4
   script:
     - black -l 120 --check --fast docs kw test setup.py
     - black -l 120 --check --py36 kw/cache/aio.py
 
-static-analysis:
-  stage: test
-  image: coala/base:0.11
-  script:
-   - coala --non-interactive
-
 tests:
   stage: test
-  image: themattrix/tox
+  image: kiwicom/tox
   services:
    - redis
   script:
