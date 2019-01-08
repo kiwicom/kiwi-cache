@@ -250,7 +250,7 @@ class BaseKiwiCache(object):
         :param status: metric status
         """
         if self.statsd:
-            self.statsd.increment(self.metric, tags=["name:{}".format(self.name), "status:{}".format(status)])
+            self.statsd.increment(self.metric, tags=["cache_name:{}".format(self.name), "status:{}".format(status)])
 
 
 @attr.s

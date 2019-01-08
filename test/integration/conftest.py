@@ -1,6 +1,5 @@
 import os
 
-from freezegun import freeze_time
 import pytest
 import redis as redislib
 import testing.redis
@@ -20,10 +19,3 @@ def redis(redis_url):  # pylint: disable=redefined-outer-name
     client = redislib.StrictRedis.from_url(redis_url)
     yield client
     client.flushall()
-
-
-@pytest.fixture
-def frozen_time():
-    ft = freeze_time("2000-01-01 00:00:00")
-    yield ft.start()
-    ft.stop()

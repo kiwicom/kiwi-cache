@@ -20,7 +20,7 @@ class CallAttempt(object):
 
     name = attr.ib(None, type=str)
     max_attempts = attr.ib(3, type=int)
-    counter = attr.ib(None, type=int)
+    counter = attr.ib(None, init=False, type=int)
 
     def __attrs_post_init__(self):
         self.reset()

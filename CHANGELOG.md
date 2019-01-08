@@ -2,6 +2,16 @@
 
 ### Changed
 
+## [0.5.0] – 2020-01-22
+
+### Added
+
+- `AioBaseKiwiCache` corresponding with `BaseKiwiCache`
+
+### Changed
+
+- rework `AioKiwiCache` to correspond with `KiwiCache`
+
 ## [0.4.5] – 2019-10-08
 
 ### Added

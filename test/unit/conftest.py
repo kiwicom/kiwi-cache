@@ -1,5 +1,4 @@
 import attr
-from freezegun import freeze_time
 import pytest
 
 from kw.cache import KiwiCache
@@ -38,10 +37,3 @@ class UUTResource(KiwiCache):
 @pytest.fixture
 def cache(redis):  # pylint: disable=redefined-outer-name
     return UUTResource(resources_redis=redis)
-
-
-@pytest.fixture
-def frozen_time():
-    ft = freeze_time("2000-01-01 00:00:00")
-    yield ft.start()
-    ft.stop()

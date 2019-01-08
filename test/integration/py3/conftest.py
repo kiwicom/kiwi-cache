@@ -24,8 +24,8 @@ class ArrayCache(AioKiwiCache):
 
 @pytest.fixture
 def get_cache(get_aioredis, mocker):  # pylint: disable=redefined-outer-name
-    async def coroutine():
-        cache_instance = ArrayCache(await get_aioredis())
+    async def coroutine(**params):
+        cache_instance = ArrayCache(resources_redis=await get_aioredis(), **params)
         mocker.spy(cache_instance, "load_from_cache")
         mocker.spy(cache_instance, "load_from_source")
         return cache_instance
