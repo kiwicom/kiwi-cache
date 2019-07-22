@@ -72,11 +72,3 @@ bears = KeywordBear
 language = python
 keywords = TODO, FIXME, pdb.set_trace()  # Ignore KeywordBear
 
-[links]
-bears = InvalidLinkBear
-# We ignore:
-# - example.com (coala default)
-# - {}-style formatting (coala default)
-# - %s-style formatting
-# - gitlab.skypicker.com since it requires auth
-link_ignore_regex = ([./]example.com|{|%(?:\(\w+?\))?s|gitlab\.skypicker\.com)
