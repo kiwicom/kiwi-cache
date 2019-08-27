@@ -23,6 +23,8 @@ disable =
   too-few-public-methods,
   super-init-not-called,
   too-many-ancestors,
+  useless-object-inheritance,
+  inconsistent-return-statements,
 
 [REPORTS]
 output-format=colorized
