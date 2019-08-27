@@ -1,10 +1,12 @@
 stages:
  - build
  - test
+ - post-test
  - release
 
 include:
   - 'https://ci-files.skypicker.com/templates/build/coala.yml'
+  - 'https://ci-files.skypicker.com/templates/build/tox_init.yml'
   - 'https://ci-files.skypicker.com/templates/build/zoo.yml'
   - 'https://ci-files.skypicker.com/templates/build/black.yml'
 
@@ -16,11 +18,34 @@ black:
 tests:
   stage: test
   image: kiwicom/tox
+  dependencies:
+    - tox_init
   services:
    - redis
   script:
    - export TEST_REDIS_URL=redis://$REDIS_PORT_6379_TCP_ADDR
-   - tox
+   - TOX_SKIP_ENV="coverage-report|coala" tox
+  artifacts:
+    paths:
+      - reports/
+      - .coverage*
+
+tox_tests_coverage:
+  extends: tests
+  stage: post-test
+  dependencies:
+    - tox_init
+    - tests
+  needs:
+    - tox_init
+    - tests
+  before_script:
+    - mkdir -p $CI_PROJECT_DIR/coverage-reports
+  artifacts:
+    paths:
+      - coverage-reports/
+  script:
+    - tox -e coverage-report -- -o $CI_PROJECT_DIR/coverage-reports/coverage-integration.xml
 
 pages:
   stage: release
