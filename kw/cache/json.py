@@ -65,7 +65,7 @@ def json_encoder(obj):
     """Convert datetime objects into timestamp."""
     if isinstance(obj, datetime.datetime):
         return time.mktime(obj.timetuple())
-    elif isinstance(obj, datetime.timedelta):
+    if isinstance(obj, datetime.timedelta):
         return obj.total_seconds()
 
 
