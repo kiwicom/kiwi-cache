@@ -2,10 +2,9 @@ attrs
 coverage
 freezegun
 future
-pylint
-pytest
+more-itertools<5.0  # The last version with Python 2 support
+pytest<5.0  # The last version with Python 2 support
 pytest-asyncio ; python_version > "3.3"
-pytest-cov
 pytest-mock
 mock
 testing.redis
