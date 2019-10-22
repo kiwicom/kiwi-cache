@@ -12,7 +12,7 @@ def test_load_from_source(cache):
     assert cache["b"] == 102
     assert cache.load_from_source.call_count == 1
 
-    assert sorted([x for x in cache])[2] == "c"
+    assert sorted(cache)[2] == "c"
     assert cache.load_from_source.call_count == 1
 
 

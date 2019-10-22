@@ -10,7 +10,7 @@ def test_dict(mocker, redis, test_data, test_cache_record):
     instance = uuid(resources_redis=redis)
     mocker.patch.object(redis, "get", return_value=json.dumps(test_cache_record))
 
-    assert [it for it in instance] == [it for it in test_data]
+    assert list(instance) == list(test_data)
     assert instance.keys() == test_data.keys()
     assert list(instance.values()) == list(test_data.values())
     assert instance.items() == test_data.items()
