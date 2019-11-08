@@ -380,12 +380,15 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
             return
 
         try:
-            source_data = self.load_from_source()
-        except Exception as e:
-            self._process_refill_error("kiwicache.source_exception", e)
-            return
+            try:
+                source_data = self.load_from_source()
+            except Exception as e:
+                self._process_refill_error("kiwicache.source_exception", e)
+                return
 
-        if source_data:
-            self.save_to_cache(source_data)
-        else:
-            self._process_refill_error("load_from_source returned empty response!")
+            if source_data:
+                self.save_to_cache(source_data)
+            else:
+                self._process_refill_error("load_from_source returned empty response!")
+        finally:
+            self._release_refill_lock()
