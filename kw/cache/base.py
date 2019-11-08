@@ -116,7 +116,7 @@ class BaseKiwiCache(object):
         """Load the full data bundle from cache."""
         try:
             value = self.resources_redis.get(self._cache_key)
-        except redis.exceptions.ConnectionError:
+        except redis.exceptions.RedisError:
             self._process_cache_error("kiwicache.load_failed")
             return None
 
@@ -135,7 +135,7 @@ class BaseKiwiCache(object):
         cache_record = CacheRecord(data=data)
         try:
             self.resources_redis.set(self._cache_key, self.json.dumps(attr.asdict(cache_record)), ex=self._cache_ttl)
-        except redis.exceptions.ConnectionError:
+        except redis.exceptions.RedisError:
             self._process_cache_error("kiwicache.save_failed")
         else:
             self._increment_metric("success")
@@ -149,7 +149,7 @@ class BaseKiwiCache(object):
         """
         try:
             return bool(self.resources_redis.set(self._refill_lock_key, "locked", ex=self.refill_ttl, nx=True))
-        except redis.exceptions.ConnectionError:
+        except redis.exceptions.RedisError:
             self._process_cache_error("kiwicache.refill_lock_failed")
             return None
 
@@ -193,7 +193,7 @@ class BaseKiwiCache(object):
         """
         try:
             return bool(self.resources_redis.delete(self._refill_lock_key))
-        except redis.exceptions.ConnectionError:
+        except redis.exceptions.RedisError:
             self._process_cache_error("kiwicache.release_lock_failed")
             return None
 
@@ -202,7 +202,7 @@ class BaseKiwiCache(object):
         """Prolong cache expiration."""
         try:
             self.resources_redis.expire(self._cache_key, time=self._cache_ttl)
-        except redis.exceptions.ConnectionError:
+        except redis.exceptions.RedisError:
             self._process_cache_error("kiwicache.prolong_expiration_failed")
 
     def _process_cache_error(self, msg):
