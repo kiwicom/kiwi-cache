@@ -2,6 +2,21 @@
 
 ### Changed
 
+## [0.4.5] – 2019-10-08
+
+### Added
+
+- setting for possibility having empty data in source
+
+### Changed
+
+- upgrade requirements
+- release of refill lock after loading from source
+- prolonging local data when we cannot reload them
+- catching of all RedisErrors instead of ConnectionError - breaking change,
+  if you want the original behavior then you can override `_process_cache_error` method
+- fix infinite loop in case of RedisError with max_attemps > 0
+
 ## [0.4.4] – 2018-10-09
 
 ### Added
