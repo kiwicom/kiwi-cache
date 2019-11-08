@@ -270,6 +270,7 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
     - `data` - local data dict
     - `max_attempts` - maximum attempts for refill cache (if negative - one attempt is used and no Exception is raised)
     - `_call_attempt` - local refill attempts countdown entity
+    - `allow_empty_data` - allow empty data in the resource
 
     Base class attributes:
     - `instances` - dict of instances with one instance per each _cache_key
@@ -286,6 +287,7 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
     _data = attr.ib(attr.Factory(dict), type=dict, validator=attr.validators.instance_of(dict))
     max_attempts = attr.ib(-1, type=int, validator=attr.validators.instance_of(int))
     _call_attempt = attr.ib(init=False, type=CallAttempt)
+    allow_empty_data = attr.ib(False, type=bool, validator=attr.validators.instance_of(bool))
 
     # class attributes
     instances = {}  # type: Dict[str, KiwiCache]
@@ -358,7 +360,7 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
     def maybe_reload(self):
         # type: () -> None
         """Load the full data bundle if it's too old."""
-        if not self._data or self.expires_at <= datetime.utcnow():
+        if self.expires_at <= datetime.utcnow() or (not self._data and not self.allow_empty_data):
             self.reload()
 
     def _prolong_data_expiration(self):
@@ -401,7 +403,7 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
                 self._process_refill_error("kiwicache.source_exception", e)
                 return
 
-            if source_data:
+            if source_data or self.allow_empty_data:
                 self.save_to_cache(source_data)
             else:
                 self._process_refill_error("load_from_source returned empty response!")

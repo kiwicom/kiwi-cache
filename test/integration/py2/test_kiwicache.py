@@ -5,7 +5,6 @@ from redis import exceptions
 
 from kw.cache.helpers import CallAttemptException
 
-
 from .conftest import ArrayCache
 
 
@@ -20,9 +19,18 @@ def test_load_from_source(cache):
     assert cache.load_from_source.call_count == 1
 
 
+def test_allow_empty(cache, mocker):
+    cache.allow_empty_data = True
+    mocker.patch.object(cache, "load_from_source", return_value={})
+
+    assert cache.get("a") is None
+    with pytest.raises(KeyError):
+        assert not cache["b"]
+    assert cache.load_from_source.call_count == 1
+
+
 @pytest.mark.usefixtures("frozen_time")
 def test_error(cache, mocker):
-    mocker.patch("time.sleep")
     mocker.patch.object(cache, "load_from_source", side_effect=[Exception("Mock error"), cache.load_from_source()])
 
     assert cache["a"] == 101
