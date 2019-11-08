@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta
 
 import pytest
+from redis import exceptions
+
+from kw.cache.helpers import CallAttemptException
+
 
 from .conftest import ArrayCache
 
@@ -81,3 +85,26 @@ def test_validators(redis, invalid_params, error):
     params.update(invalid_params)
     with pytest.raises(error):
         ArrayCache(**params)
+
+
+@pytest.mark.parametrize("max_attempts", [-1, 3])
+@pytest.mark.usefixtures("frozen_time")
+def test_redis_error(redis, mocker, max_attempts):
+    cache = ArrayCache(redis, max_attempts=max_attempts)
+    cache._data = {"a": 213}
+    cache.expires_at = datetime.utcnow()
+
+    mocker.spy(cache, "load_from_source")
+    mocker.spy(cache, "load_from_cache")
+    mocker.patch.object(cache.resources_redis, "set", side_effect=exceptions.RedisError)
+    mocker.patch.object(cache.resources_redis, "get", side_effect=exceptions.RedisError)
+
+    if max_attempts < 0:
+        assert cache["a"] == 213
+    else:
+        with pytest.raises(CallAttemptException):
+            cache.get("a")
+
+    assert cache.load_from_source.call_count == 0
+    assert cache.load_from_cache.call_count == (2 if max_attempts < 3 else max_attempts)
+    assert cache.expires_at == datetime.utcnow() + cache.reload_ttl

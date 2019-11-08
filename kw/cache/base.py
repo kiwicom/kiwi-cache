@@ -8,7 +8,7 @@ import redis
 import structlog
 
 from . import json, utils  # pylint: disable=unused-import
-from .helpers import CallAttempt, ReadOnlyDictMixin
+from .helpers import CallAttempt, CallAttemptException, ReadOnlyDictMixin
 
 if sys.version_info >= (3, 0):
     from collections import UserDict
@@ -328,9 +328,15 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
         """Load the full data bundle, from cache, or if unavailable, from source."""
         successful_reload = self.reload_from_cache()
         while not successful_reload:
-            self.refill_cache()
+            try:
+                self.refill_cache()
+            except CallAttemptException:
+                self._prolong_data_expiration()
+                raise
+
             successful_reload = self.reload_from_cache()
             if self.max_attempts < 0 and not successful_reload:
+                self._prolong_data_expiration()
                 self._log_error("kiwicache.reload_failed")
                 break
 
@@ -346,14 +352,19 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
             return False
 
         self._data = cache_data.data
-        self.expires_at = datetime.utcnow() + self.reload_ttl
+        self._prolong_data_expiration()
         return True
 
     def maybe_reload(self):
         # type: () -> None
         """Load the full data bundle if it's too old."""
-        if not self._data or self.expires_at < datetime.utcnow():
+        if not self._data or self.expires_at <= datetime.utcnow():
             self.reload()
+
+    def _prolong_data_expiration(self):
+        # type: () -> None
+        """Prolong expiration of the current local data."""
+        self.expires_at = datetime.utcnow() + self.reload_ttl
 
     def _prolong_cache_expiration(self):
         """Prolong cache expiration or refill if it expires and we have data locally."""
@@ -376,7 +387,11 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
     def refill_cache(self):
         # type: () -> None
         """Refill cache with the full data bundle from source in Redis."""
-        if not self._wait_for_refill_lock():
+        has_lock = self._wait_for_refill_lock()
+        if not has_lock:
+            if has_lock is None:
+                # redis error
+                self._call_attempt.countdown()
             return
 
         try:

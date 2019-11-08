@@ -11,9 +11,6 @@ class ArrayCache(KiwiCache):
     def load_from_source(self):
         return {"a": 101, "b": 102, "c": 103}
 
-    def _get_refill_lock(self):
-        return True
-
 
 @pytest.fixture
 def cache(redis, mocker):
