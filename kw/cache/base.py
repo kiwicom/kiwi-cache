@@ -340,6 +340,10 @@ class KiwiCache(BaseKiwiCache, UserDict, ReadOnlyDictMixin):
             if self.max_attempts < 0 and not successful_reload:
                 self._prolong_data_expiration()
                 self._log_error("kiwicache.reload_failed")
+
+                # Fallback to source if redis doesn't work
+                self._data = self.load_from_source()
+
                 break
 
     def reload_from_cache(self):
