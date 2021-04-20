@@ -4,27 +4,61 @@
 #
 #    pip-compile --output-file=test-requirements.txt test-requirements.in
 #
-atomicwrites==1.3.0       # via pytest
+atomicwrites==1.3.0
+    # via pytest
 attrs==19.3.0
+    # via
+    #   -r test-requirements.in
+    #   pytest
 coverage==5.0.3
+    # via -r test-requirements.in
 freezegun==0.3.12
+    # via -r test-requirements.in
 future==0.18.2
-importlib-metadata==0.23  # via pluggy, pytest
+    # via -r test-requirements.in
 mock==3.0.5
+    # via -r test-requirements.in
 more-itertools==4.3.0
-packaging==19.2           # via pytest
-pluggy==0.13.0            # via pytest
-py==1.8.0                 # via pytest
-pyparsing==2.4.5          # via packaging
+    # via
+    #   -r test-requirements.in
+    #   pytest
+packaging==19.2
+    # via pytest
+pluggy==0.13.0
+    # via pytest
+py==1.10.0
+    # via pytest
+pyparsing==2.4.5
+    # via packaging
 pytest-asyncio==0.10.0 ; python_version > "3.3"
+    # via -r test-requirements.in
 pytest-mock==1.11.2
+    # via -r test-requirements.in
 pytest==4.6.6
-python-dateutil==2.8.1    # via freezegun
-redis==3.3.11             # via testing.redis
-six==1.13.0               # via freezegun, mock, more-itertools, packaging, pytest, python-dateutil, structlog
+    # via
+    #   -r test-requirements.in
+    #   pytest-asyncio
+    #   pytest-mock
+python-dateutil==2.8.1
+    # via freezegun
+redis==3.3.11
+    # via testing.redis
+six==1.13.0
+    # via
+    #   freezegun
+    #   mock
+    #   more-itertools
+    #   packaging
+    #   pytest
+    #   python-dateutil
+    #   structlog
 sqlalchemy==1.3.10
+    # via -r test-requirements.in
 structlog==19.2.0
-testing.common.database==2.0.3  # via testing.redis
+    # via -r test-requirements.in
+testing.common.database==2.0.3
+    # via testing.redis
 testing.redis==1.1.1
-wcwidth==0.1.7            # via pytest
-zipp==0.6.0               # via importlib-metadata
+    # via -r test-requirements.in
+wcwidth==0.1.7
+    # via pytest
