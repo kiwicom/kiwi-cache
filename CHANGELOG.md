@@ -2,6 +2,12 @@
 
 ### Changed
 
+## [0.5.2] – 2024-09-27
+
+### Changed
+
+Deprecate `pkg_resources`
+
 ## [0.5.0] – 2020-01-22
 
 ### Added

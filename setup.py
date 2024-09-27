@@ -8,7 +8,7 @@ with open("test-requirements.in") as f:
 
 setup(
     name="kiwi-cache",
-    version="0.5.0",
+    version="0.5.2",
     url="https://github.com/kiwicom/kiwi-cache",
     author="Stanislav Komanec",
     author_email="platform@kiwi.com",
